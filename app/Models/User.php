@@ -3,10 +3,15 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Observers\UserObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+
+#[ObservedBy([UserObserver::class])]
 
 class User extends Authenticatable
 {
@@ -46,9 +51,16 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-
     public function lawyer()
     {
         return $this->belongsTo('App\Models\Lawyer');
+    }
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+    public function walletTransactions(): HasManyThrough
+    {
+        return $this->hasManyThrough(WalletTransaction::class, Wallet::class);
     }
 }

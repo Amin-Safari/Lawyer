@@ -22,7 +22,7 @@ class SkillsTable
                 //
             ])
             ->recordActions([
-                DeleteAction::class,
+                DeleteAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([
