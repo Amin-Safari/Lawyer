@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Wallets\Tables;
 
+use App\Filament\Resources\WalletTransactions\WalletTransactionResource;
 use App\Models\Wallet;
 use App\Services\WalletService;
 use Filament\Actions\Action;
@@ -71,6 +72,11 @@ class WalletsTable
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                ->label('تاریخ تغییر')
+                ->dateTime('d/m/Y')
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
                 ])
             ->filters([
                 SelectFilter::make('status')
@@ -89,12 +95,12 @@ class WalletsTable
 
             ])
             ->recordActions([
-//                Action::make('transactions')
-//                    ->label('تراکنش‌ها')
-//                    ->icon('heroicon-o-currency-dollar')
-//                    ->url(fn (Wallet $record): string => WalletTransactionResource::getUrl('index', [
-//                        'tableFilters[wallet_id]' => $record->id,
-//                    ])),
+                Action::make('transactions')
+                    ->label('تراکنش‌ها')
+                    ->icon('heroicon-o-currency-dollar')
+                    ->url(fn (Wallet $record): string => WalletTransactionResource::getUrl('index', [
+                        'tableFilters[wallet_id]' => $record->id,
+                    ])),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),

@@ -20,7 +20,8 @@ class WalletResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWallet;
 
-    protected static ?string $recordTitleAttribute = 'Wallet';
+    protected static ?string $recordTitleAttribute = 'کیف پول';
+    protected static ?string $label ='کیف پول ';
 
     public static function form(Schema $schema): Schema
     {

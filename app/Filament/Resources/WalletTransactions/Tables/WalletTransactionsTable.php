@@ -230,7 +230,7 @@ class WalletTransactionsTable
                     ->action(function (WalletTransaction $record, array $data): void {
                         $oldStatus = $record->status;
                         $record->update(['status' => $data['status']]);
-
+//
 //                        activity()
 //                            ->performedOn($record)
 //                            ->causedBy(auth()->user())

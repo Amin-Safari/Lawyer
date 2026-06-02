@@ -20,8 +20,8 @@ class LawyerResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserCircle;
 
-    protected static ?string $recordTitleAttribute = 'lawyer';
-
+    protected static ?string $recordTitleAttribute = 'وکیل ها';
+    protected static ?string $label ='وکیل ';
     public static function form(Schema $schema): Schema
     {
         return LawyerForm::configure($schema);

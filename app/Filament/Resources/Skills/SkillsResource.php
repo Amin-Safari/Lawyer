@@ -20,7 +20,8 @@ class SkillsResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $recordTitleAttribute = 'Skill';
+    protected static ?string $recordTitleAttribute = 'تخصص ها';
+    protected static ?string $label ='تخصص ';
 
     public static function form(Schema $schema): Schema
     {

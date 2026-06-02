@@ -19,13 +19,14 @@ class LawyerForm
         return $schema
             ->components([
                 Select::make('user_id')
-                    ->label('User')
+                    ->label('کاربر')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
                     ->disabledOn('edit'),
                 FileUpload::make('avatar')
+                    ->label("آواتار")
                     ->image()
                     ->directory('avatars')
                     ->maxSize(2048)
@@ -39,6 +40,7 @@ class LawyerForm
                     ->maxLength(1000)
                     ->columnSpanFull(),
                 Select::make('province_id')
+                    ->label("استان")
                     ->relationship('province')
                     ->options(Province::all()->pluck('name', 'id'))
                     ->searchable()
@@ -46,7 +48,7 @@ class LawyerForm
                     ->live()
                     ->afterStateUpdated(fn(Set $set) => $set('city_id', null)),
                 Select::make('city_id')
-                    ->label('City')
+                    ->label('شهر')
                     ->options(function (Get $get) {
                         $provinceId = $get('province_id');
                         if (!$provinceId) {
@@ -59,14 +61,12 @@ class LawyerForm
                     ->preload()
                     ->required(),
                 Textarea::make('address')
-                    ->required()
-                    ->rows(3)
-                    ->columnSpanFull(),
-                Textarea::make('description')
+                    ->label("آدرس")
                     ->required()
                     ->rows(3)
                     ->columnSpanFull(),
                 TextInput::make('phone')
+                    ->label("شماره تماس")
                     ->tel()
                     ->prefix('09')
                     ->maxLength(11)
@@ -74,9 +74,11 @@ class LawyerForm
                     ->required()
                     ->helperText('09121231234'),
                     TextInput::make('attorneys_license')
+                        ->label("پروانه وکالت")
                 ->required()
                 ->maxLength(50),
                 Select::make('skills')
+                    ->label("تخصص ها")
                     ->relationship('skills', 'name')
                     ->multiple()
                     ->required()

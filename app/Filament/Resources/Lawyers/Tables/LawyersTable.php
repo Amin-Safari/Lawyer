@@ -27,46 +27,45 @@ class LawyersTable
                     ->sortable()
                 ->toggleable(),
                 TextColumn::make('user.name')
-                    ->label('Name')
+                    ->label('نام و نام خانوادگی')
                     ->searchable()
                     ->sortable()
                 ->toggleable(),
                 ImageColumn::make('avatar')
-                    ->label('Avatar')
+                    ->label('آواتار')
                     ->circular()
-
                     ->imageHeight(40)
                     ->defaultImageUrl('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT7gTERsv3nO-4I-R9C00Uor_m_nmxT0sE9Cg&s'),
                 TextColumn::make('attorneys_license')
                     ->toggleable()
-                    ->label('Attorneys license'),
+                    ->label('پروانه وکالت'),
                 TextColumn::make('description')
-                    ->label('Description')
+                    ->label('توضیحات')
                     ->wrap()
                     ->toggleable()
                     ->size(TextSize::ExtraSmall)
                     ->limit(50, end: '...'),
                 TextColumn::make('province.name')
                     ->sortable()
-                ->label('Province')
+                ->label('استان')
                 ->searchable()
                 ->toggleable(),
                 TextColumn::make('city.name')
-                    ->label('City')
+                    ->label('شهر')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('address')
-                    ->label('Address')
+                    ->label('آدرس')
                     ->wrap()
                     ->toggleable()
                     ->size(TextSize::ExtraSmall)
                     ->limit(50, end: '...'),
                 TextColumn::make('phone')
-                    ->label('Phone')
+                    ->label('شماره تماس')
                     ->toggleable()
                     ->searchable(),
                 TagsColumn::make('skills.name')
-                    ->label('مهارت‌ها')
+                    ->label('تخصص ها')
                     ->toggleable()
                     ->separator(',')
                     ->searchable()
@@ -75,12 +74,12 @@ class LawyersTable
                         return $record->skills->pluck('name')->toArray();
                     }),
                 TextColumn::make('created_at')
-                    ->label('Created At')
+                    ->label('تاریخ ایجاد')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('updated_at')
-                    ->label('Updated At')
+                    ->label('تاریخ تغییر')
                     ->sortable()
                     ->dateTime('d/m/Y H:i')
                     ->toggleable(isToggledHiddenByDefault: false),

@@ -20,7 +20,8 @@ class WalletTransactionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::CurrencyDollar;
 
-    protected static ?string $recordTitleAttribute = 'WalletTransaction';
+    protected static ?string $recordTitleAttribute = 'تراکنش کیف پول';
+    protected static ?string $label ='تراکنش کیف پول ';
 
     public static function form(Schema $schema): Schema
     {

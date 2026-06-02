@@ -12,8 +12,23 @@ class SkillsForm
         return $schema
             ->components([
                 TextInput::make('name')
+                    ->label("نام تخصص")
                 ->required()
-                ->maxLength(255)
+                ->maxLength(255),
+                TextInput::make('click_price')
+                    ->label("قیمت کلیک")
+                ->required()
+                ->numeric()
+                ->default(10000)
+                ->step(10000)
+                ->maxLength(10)
+                ->prefix('ريال'),
+                TextInput::make('total_clicks')
+                    ->label("مجموع کلیک ها")
+                ->required()
+                ->numeric()
+                ->default(0)
+
             ]);
     }
 }

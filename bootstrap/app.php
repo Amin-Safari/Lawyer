@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\LawyerMiddleware;
+use App\Http\Middleware\ThrottleSmsRequestsMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'lawyer' => LawyerMiddleware::class,
+            'throttle.sms' => ThrottleSmsRequestsMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

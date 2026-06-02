@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class LawyerSeeder extends Seeder
+class SkillSeeder extends Seeder
 {
     public function run(): void
     {
