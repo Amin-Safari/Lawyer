@@ -191,9 +191,9 @@
                         </div>
                     </div>
                 @else
-                    <div class="row g-4">
+                    <div class="row g-4  ">
                         @foreach($lawyers as $lawyer)
-                            <div class="col-md-6 col-xl-6">
+                            <div class="col-12 col-md-6 col-xl-6 ">
                                 <div
                                     class="card lawyer-card border-0 shadow-lg h-100 animate__animated animate__fadeInUp"
                                     style="animation-delay: {{ $loop->index * 0.1 }}s">
@@ -297,8 +297,8 @@
                                     </div>
                                 </div>
                             </div>
+                        @endforeach
                     </div>
-                    @endforeach
         </div>
         @endif
         @endif
