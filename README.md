@@ -73,3 +73,12 @@ npm install && npm run build
 
 # 8. اجرای پروژه
 php artisan serve
+
+
+```
+## 📜 لایسنس  
+MIT © 2025 Amin-Safari  
+
+---
+
+Developed with ❤️ by Amin Safari
