@@ -49,6 +49,7 @@ class Lawyer extends Model
     public function skills(): BelongsToMany
     {
         return $this->belongsToMany(Skill::class, 'lawyer_skill')
+            ->withPivot('is_active')
             ->withTimestamps();
     }
 
@@ -79,6 +80,29 @@ class Lawyer extends Model
     public function getActiveSkillsAttribute()
     {
         return $this->skills()->wherePivot('is_active', true)->get();
+    }
+
+    public function getExperienceYearsAttribute()
+    {
+        if (!$this->created_at) {
+            return 0;
+        }
+        return $this->created_at->diffInYears(now());
+    }
+
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar && file_exists(public_path($this->avatar))) {
+            return asset($this->avatar);
+        }
+
+        // اگر آواتار اختصاصی نداشت، از تصویر پروفایل کاربر استفاده کن
+        if ($this->user && $this->user->profile_image) {
+            return asset($this->user->profile_image);
+        }
+
+        // تصویر پیش‌فرض
+        return asset('images/default-avatar.png');
     }
 
 }

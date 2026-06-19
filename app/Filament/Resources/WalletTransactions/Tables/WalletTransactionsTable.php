@@ -46,7 +46,7 @@ class WalletTransactionsTable
                 TextColumn::make('wallet.wallet_number')
                     ->label('کیف پول')
                     ->searchable()
-                    ->url(fn($record) => WalletResource::getIndexUrl( ['record' => $record->wallet_id],'view'))
+                    ->url(fn($record) => WalletResource::getIndexUrl(['record' => $record->wallet_id], 'view'))
                     ->openUrlInNewTab(),
                 TextColumn::make('user.name')
                     ->label('کاربر')
@@ -177,11 +177,11 @@ class WalletTransactionsTable
                         return $query
                             ->when(
                                 $data['min_amount'],
-                                fn (Builder $query, $amount): Builder => $query->where('amount', '>=', $amount),
+                                fn(Builder $query, $amount): Builder => $query->where('amount', '>=', $amount),
                             )
                             ->when(
                                 $data['max_amount'],
-                                fn (Builder $query, $amount): Builder => $query->where('amount', '<=', $amount),
+                                fn(Builder $query, $amount): Builder => $query->where('amount', '<=', $amount),
                             );
                     }),
                 Filter::make('created_at')
@@ -197,11 +197,11 @@ class WalletTransactionsTable
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     }),
             ])
@@ -213,7 +213,7 @@ class WalletTransactionsTable
                     ->label('تغییر وضعیت')
                     ->icon('heroicon-o-adjustments-horizontal')
                     ->form([
-                       Select::make('status')
+                        Select::make('status')
                             ->label('وضعیت جدید')
                             ->options([
                                 'pending' => 'در انتظار',
@@ -246,7 +246,7 @@ class WalletTransactionsTable
                             ->success()
                             ->send();
                     })
-                    ->visible(fn ($record) => in_array($record->status, ['pending', 'failed'])),
+                    ->visible(fn($record) => in_array($record->status, ['pending', 'failed'])),
 
             ])
             ->toolbarActions([
@@ -255,7 +255,7 @@ class WalletTransactionsTable
                     BulkAction::make('export')
                         ->label('خروجی اکسل')
                         ->icon('heroicon-o-arrow-down-tray')
-                        ->action(fn (Collection $records) => (new WalletTransactionExport($records))->download('transactions.xlsx')),
+                        ->action(fn(Collection $records) => (new WalletTransactionExport($records))->download('transactions.xlsx')),
                 ]),
             ]);
     }

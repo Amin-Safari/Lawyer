@@ -33,6 +33,7 @@ class LawyersTable
                 ->toggleable(),
                 ImageColumn::make('avatar')
                     ->label('آواتار')
+                    ->disk('public')
                     ->circular()
                     ->imageHeight(40)
                     ->defaultImageUrl('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT7gTERsv3nO-4I-R9C00Uor_m_nmxT0sE9Cg&s'),

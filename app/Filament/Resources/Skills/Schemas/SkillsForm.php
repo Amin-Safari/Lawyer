@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Skills\Schemas;
 
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class SkillsForm
@@ -27,8 +28,10 @@ class SkillsForm
                     ->label("مجموع کلیک ها")
                 ->required()
                 ->numeric()
-                ->default(0)
-
+                ->default(0),
+                Toggle::make('is_active')
+                    ->label("فعال")
+                    ->required(),
             ]);
     }
 }

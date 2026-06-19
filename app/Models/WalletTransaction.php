@@ -32,9 +32,9 @@ class WalletTransaction extends Model
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'balance_before' => 'decimal:2',
-        'balance_after' => 'decimal:2',
+        'amount' => 'decimal:0',
+        'balance_before' => 'decimal:0',
+        'balance_after' => 'decimal:0',
         'metadata' => 'array',
         'completed_at' => 'datetime',
         'failed_at' => 'datetime',
@@ -99,5 +99,33 @@ class WalletTransaction extends Model
     {
         $sign = in_array($this->type, [self::TYPE_WITHDRAWAL, self::TYPE_PAYMENT, self::TYPE_FEE]) ? '-' : '+';
         return $sign . number_format($this->amount, 2) . ' ' . $this->currency;
+    }
+
+    // در فایل app/Models/WalletTransaction.php
+
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if (is_null($transaction->balance_before) && $transaction->wallet_id) {
+                $wallet = Wallet::find($transaction->wallet_id);
+                $transaction->balance_before = $wallet?->balance ?? 0;
+            }
+
+            if (is_null($transaction->balance_after) && $transaction->balance_before && $transaction->amount) {
+                if ($transaction->type === 'withdrawal' || $transaction->type === 'payment' || $transaction->type === 'fee') {
+                    $transaction->balance_after = $transaction->balance_before - $transaction->amount;
+                } else {
+                    $transaction->balance_after = $transaction->balance_before + $transaction->amount;
+                }
+            }
+
+            if (is_null($transaction->ip_address)) {
+                $transaction->ip_address = request()->ip();
+            }
+
+            if (is_null($transaction->user_agent)) {
+                $transaction->user_agent = request()->userAgent();
+            }
+        });
     }
 }

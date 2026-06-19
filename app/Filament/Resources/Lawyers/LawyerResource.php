@@ -17,7 +17,8 @@ use Filament\Tables\Table;
 class LawyerResource extends Resource
 {
     protected static ?string $model = Lawyer::class;
-
+    protected static string|null|\UnitEnum $navigationGroup = 'مدیریت کاربران';
+    protected static ?int $navigationSort = 2;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserCircle;
 
     protected static ?string $recordTitleAttribute = 'وکیل ها';

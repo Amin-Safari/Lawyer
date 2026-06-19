@@ -2,51 +2,43 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Skill extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'name',
         'click_price',
         'total_clicks',
-        'is_active',
+        'is_active'
     ];
 
-    protected $casts = [
-        'click_price' => 'decimal:0',
-        'is_active' => 'boolean',
-        'total_clicks' => 'integer',
-    ];
-
+    // رابطه many-to-many با جدول واسط lawyer_skill
     public function lawyers(): BelongsToMany
     {
         return $this->belongsToMany(Lawyer::class, 'lawyer_skill')
+            ->withPivot('is_active')
             ->withTimestamps();
     }
 
-    public function clicks()
+    // وکلای فعال برای این مهارت
+    public function activeLawyers(): BelongsToMany
+    {
+        // اگر خود مهارت غیرفعال است، خالی برگردان
+        if (!$this->is_active) {
+            return $this->belongsToMany(Lawyer::class, 'lawyer_skill')->whereRaw('0');
+        }
+        return $this->belongsToMany(Lawyer::class, 'lawyer_skill')
+            ->wherePivot('is_active', true)
+            ->whereHas('user.wallet', function($q) {
+                $q->where('balance', '>', 1000)
+                    ->where('status', 'active');
+            });
+    }
+
+    public function skillClicks()
     {
         return $this->hasMany(SkillClick::class);
-    }
-
-    public function getTotalRevenueAttribute()
-    {
-        return $this->clicks()->where('type', 'call')->sum('cost');
-    }
-
-    public function getActiveLawyersAttribute()
-    {
-        return $this->lawyers()
-            ->where('is_active', true)
-            ->whereHas('user.wallet', function ($query) {
-                $query->where('balance', '>', 0)
-                    ->where('status', 'active');
-            })
-            ->get();
     }
 }

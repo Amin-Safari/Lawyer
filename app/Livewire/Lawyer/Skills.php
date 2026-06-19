@@ -43,22 +43,36 @@ class Skills extends Component
     {
         $this->validate();
 
-        // آماده‌سازی داده‌ها برای sync
         $syncData = [];
         foreach ($this->selectedSkills as $skillId) {
             $syncData[$skillId] = [
-                'click_price' => $this->prices[$skillId] ?? Skill::find($skillId)->click_price,
                 'is_active' => $this->isActive[$skillId] ?? true,
             ];
         }
 
-        // sync مهارت‌ها
         $this->lawyer->skills()->sync($syncData);
 
         $this->dispatch('notify', [
             'type' => 'success',
             'message' => 'مهارت‌ها با موفقیت به‌روزرسانی شدند.'
         ]);
+    }
+    public function toggleSkill($skillId)
+    {
+        if (in_array($skillId, $this->selectedSkills)) {
+            $this->selectedSkills = array_values(
+                array_filter($this->selectedSkills, fn($id) => $id !== $skillId)
+            );
+        } else {
+            $this->selectedSkills[] = $skillId;
+            // مقدار پیش‌فرض برای مهارت تازه انتخاب شده
+            if (!isset($this->prices[$skillId])) {
+                $this->prices[$skillId] = Skill::find($skillId)->click_price;
+            }
+            if (!isset($this->isActive[$skillId])) {
+                $this->isActive[$skillId] = true;
+            }
+        }
     }
 
     public function render()

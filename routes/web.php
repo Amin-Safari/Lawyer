@@ -1,5 +1,8 @@
 <?php
 
+use App\Livewire\Profile\ChangeEmail;
+use App\Livewire\Profile\ChangePassword;
+use App\Livewire\Profile\ChangePhone;
 use App\Livewire\SkillSelection;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
@@ -15,13 +18,18 @@ use Illuminate\Support\Facades\Route;
 // صفحات عمومی
 Route::get('/', SkillSelection::class)->name('home');
 Route::get('/skills', SkillSelection::class)->name('skills.selection');
-
+Route::get('/lawyer/profile/{lawyerId}/{skillId?}', App\Livewire\LawyerProfile::class)
+    ->name('lawyer.profile.public');
 // احراز هویت
 Route::middleware('guest')->group(function () {
     Route::get('/login', Login::class)->name('login');
     Route::get('/register', Register::class)->name('register');
 });
-
+Route::middleware(['auth'])->prefix('lawyer')->group(function () {
+    Route::get('/profile/change-email', ChangeEmail::class)->name('profile.change-email');
+    Route::get('/profile/change-phone', ChangePhone::class)->name('profile.change-phone');
+    Route::get('/profile/change-password', ChangePassword::class)->name('profile.change-password');
+});
 // پنل وکیل (نیاز به احراز هویت)
 Route::middleware(['auth', 'verified', 'lawyer'])->prefix('lawyer')->name('lawyer.')->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');

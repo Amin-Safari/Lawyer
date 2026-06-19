@@ -12,7 +12,6 @@ class Dashboard extends Component
     public $wallet;
     public $timeRange = 'month';
 
-    // آمارها
     public $stats = [];
 
     public function mount()
@@ -24,60 +23,33 @@ class Dashboard extends Component
 
     public function loadStats()
     {
-        // آمار کلیک‌ها
         $clicksQuery = SkillClick::where('lawyer_id', $this->lawyer->id);
-
-        // اعمال فیلتر زمانی
-        switch ($this->timeRange) {
-            case 'day':
-                $clicksQuery->whereDate('created_at', today());
-                break;
-            case 'week':
-                $clicksQuery->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $clicksQuery->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year);
-                break;
-            case 'year':
-                $clicksQuery->whereYear('created_at', now()->year);
-                break;
-        }
-
-        // آمار تراکنش‌ها
         $transactionsQuery = WalletTransaction::where('wallet_id', $this->wallet->id);
 
-        // اعمال فیلتر زمانی مشابه
-        switch ($this->timeRange) {
-            case 'day':
-                $transactionsQuery->whereDate('created_at', today());
-                break;
-            case 'week':
-                $transactionsQuery->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $transactionsQuery->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year);
-                break;
-            case 'year':
-                $transactionsQuery->whereYear('created_at', now()->year);
-                break;
-        }
+        // اعمال فیلتر زمانی
+        match ($this->timeRange) {
+            'day' => $clicksQuery->whereDate('created_at', today()),
+            'week' => $clicksQuery->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $clicksQuery->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year),
+            'year' => $clicksQuery->whereYear('created_at', now()->year),
+        };
+
+        match ($this->timeRange) {
+            'day' => $transactionsQuery->whereDate('created_at', today()),
+            'week' => $transactionsQuery->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $transactionsQuery->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year),
+            'year' => $transactionsQuery->whereYear('created_at', now()->year),
+        };
 
         $this->stats = [
-            // کلیک‌ها
-            'total_clicks' => $clicksQuery->count(),
-            'total_calls' => (clone $clicksQuery)->where('type', 'call')->count(),
-            'total_views' => (clone $clicksQuery)->where('type', 'view')->count(),
-            'total_cost' => (clone $clicksQuery)->where('type', 'call')->sum('cost'),
-
-            // تراکنش‌ها
-            'total_deposits' => (clone $transactionsQuery)->where('type', 'deposit')->where('status', 'completed')->sum('amount'),
-            'total_withdrawals' => (clone $transactionsQuery)->where('type', 'withdrawal')->where('status', 'completed')->sum('amount'),
-
-            // کیف پول
-            'wallet_balance' => $this->wallet->balance,
-            'pending_balance' => $this->wallet->pending_balance,
+            'total_calls'      => (clone $clicksQuery)->where('type', 'call')->count(),
+            'total_cost'       => (clone $clicksQuery)->where('type', 'call')->sum('cost'),
+            'total_deposits'   => (clone $transactionsQuery)->where('type', 'deposit')->where('status', 'completed')->sum('amount'),
+            'total_withdrawals'=> (clone $transactionsQuery)->where('type', 'withdrawal')->where('status', 'completed')->sum('amount'),
+            'wallet_balance'   => $this->wallet->balance,
+            'pending_balance'  => $this->wallet->pending_balance,
         ];
     }
 
@@ -88,24 +60,69 @@ class Dashboard extends Component
 
     public function render()
     {
-        // کلیک‌های اخیر
         $recentClicks = SkillClick::with('skill')
             ->where('lawyer_id', $this->lawyer->id)
+            ->where('type', 'call')
             ->latest()
             ->limit(5)
             ->get();
 
-        // تراکنش‌های اخیر
         $recentTransactions = WalletTransaction::where('wallet_id', $this->wallet->id)
             ->latest()
             ->limit(5)
             ->get();
 
+        $chartData = $this->getChartData();
+
         return view('livewire.lawyer.dashboard', [
             'recentClicks' => $recentClicks,
             'recentTransactions' => $recentTransactions,
+            'chartData' => $chartData,
         ])->layout('components.layouts.lawyer', [
             'title' => 'داشبورد'
         ]);
+    }
+
+    private function getChartData()
+    {
+        $query = SkillClick::where('lawyer_id', $this->lawyer->id)
+            ->where('type', 'call')
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date');
+
+        match ($this->timeRange) {
+            'day' => $query->whereDate('created_at', today()),
+            'week' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $query->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year),
+            'year' => $query->whereYear('created_at', now()->year),
+        };
+
+        $data = $query->pluck('count', 'date')->toArray();
+
+        $labels = [];
+        $values = [];
+
+        if ($this->timeRange === 'week') {
+            $start = now()->startOfWeek();
+            for ($i = 0; $i < 7; $i++) {
+                $current = $start->copy()->addDays($i);
+                $dateStr = $current->format('Y-m-d');
+                $labels[] = $current->format('l'); // شنبه، یکشنبه و ...
+                $values[] = $data[$dateStr] ?? 0;
+            }
+        } elseif ($this->timeRange === 'day') {
+            $labels = [now()->format('H:i')];
+            $values = [($data[now()->format('Y-m-d')] ?? 0)];
+        } else {
+            $labels = array_keys($data);
+            $values = array_values($data);
+        }
+
+        return [
+            'labels' => $labels,
+            'values' => $values,
+        ];
     }
 }

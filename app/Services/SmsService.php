@@ -9,8 +9,8 @@ class SmsService
 
     public function __construct()
     {
-        $this->apiUrl = 'https://console.melipayamak.com/api/send/simple/ca25fdda0f6043f1b45d4efbf71708a1';
-        $this->fromNumber = '50002710028103';
+        $this->apiUrl = config('services.sms.api_key');
+        $this->fromNumber = config('services.sms.from_number');
         // $this->apiKey = 'your-api-key-here'; // اگر نیاز به API Key دارید
     }
 

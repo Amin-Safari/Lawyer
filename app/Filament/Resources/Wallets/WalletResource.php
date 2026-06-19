@@ -19,7 +19,8 @@ class WalletResource extends Resource
     protected static ?string $model = Wallet::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWallet;
-
+    protected static string|null|\UnitEnum $navigationGroup = 'مدیریت مالی';
+    protected static ?int $navigationSort = 1;
     protected static ?string $recordTitleAttribute = 'کیف پول';
     protected static ?string $label ='کیف پول ';
 

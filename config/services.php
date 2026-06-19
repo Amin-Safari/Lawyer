@@ -39,5 +39,8 @@ return [
         'base_url' => env('MELIPAYAMAK_BASE_URL', 'https://console.melipayamak.com/api'),
         'from' => env('MELIPAYAMAK_FROM', '5000xxx'),
     ],
-
+    'sms' => [
+        'api_key' => env('SMS_API_KEY'),
+        'from_number' => env('SMS_FROM_NUMBER'),
+    ],
 ];

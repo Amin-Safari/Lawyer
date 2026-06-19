@@ -5,13 +5,20 @@ namespace App\Livewire\Lawyer;
 use App\Models\Wallet as WalletModel;
 use App\Services\WalletService;
 use Livewire\Component;
+use Livewire\WithPagination; // ✅ اضافه کردن این خط
 
 class Wallet extends Component
 {
+    use WithPagination; // ✅ اضافه کردن این خط
+
     public $wallet;
     public $chargeAmount = 0;
     public $withdrawAmount = 0;
     public $withdrawDescription = '';
+
+    public $perPage = 10; // ✅ تعداد آیتم در هر صفحه (پیش‌فرض 10)
+
+    protected $paginationTheme = 'bootstrap'; // ✅ استایل صفحه‌بندی بوت استرپ
 
     protected $rules = [
         'chargeAmount' => 'nullable|numeric|min:10000',
@@ -22,6 +29,12 @@ class Wallet extends Component
     protected $messages = [
         'withdrawAmount.max' => 'مبلغ برداشت نمی‌تواند بیشتر از موجودی کیف پول باشد.',
     ];
+
+    // ✅ متد برای تغییر تعداد نمایش در هر صفحه
+    public function updatedPerPage($value)
+    {
+        $this->resetPage(); // وقتی تعداد تغییر می‌کند، به صفحه اول برو
+    }
 
     public function mount()
     {
@@ -79,11 +92,10 @@ class Wallet extends Component
 
     public function render()
     {
-        // بارگیری تراکنش‌های اخیر
+        // ✅ بارگیری تراکنش‌ها با صفحه‌بندی
         $recentTransactions = $this->wallet->transactions()
             ->latest()
-            ->limit(10)
-            ->get();
+            ->paginate($this->perPage); // تغییر از limit به paginate
 
         return view('livewire.lawyer.wallet', [
             'recentTransactions' => $recentTransactions,

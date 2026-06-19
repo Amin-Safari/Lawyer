@@ -2,6 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\BestLawyers;
+use App\Filament\Widgets\SkillsViewChart;
+use App\Filament\Widgets\StatsOverview;
+use App\Filament\Widgets\TotalCallsChart;
 use App\Http\Middleware\AdminPanelMiddleware;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -41,7 +45,10 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,
-                FilamentInfoWidget::class,
+                StatsOverview::class,
+                SkillsViewChart::class,
+                TotalCallsChart::class,
+                BestLawyers::class
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -57,6 +64,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 AdminPanelMiddleware::class,
-            ]);
+            ])
+            ->navigationGroups(['مدیریت کاربران','مدیرت مهارت ها','مدیرت مالی']);
     }
 }

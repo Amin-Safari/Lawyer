@@ -1,11 +1,16 @@
-<!-- resources/views/livewire/lawyer/profile.blade.php -->
 <div>
-    <!-- Profile Header -->
+    @if (session()->has('message'))
+        <div class="alert alert-{{ session('type', 'info') }} alert-dismissible fade show" role="alert">
+            <i class="bi bi-{{ session('type') === 'success' ? 'check-circle' : 'exclamation-triangle' }} me-2"></i>
+            {{ session('message') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="card border-0 shadow-sm mb-4 overflow-hidden">
-        <div class="profile-cover" style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+        <div class="profile-cover profile-head" style="height: 200px;"></div>
         <div class="card-body pt-0">
             <div class="d-flex flex-column flex-md-row align-items-center">
-                <!-- Avatar -->
                 <div class="avatar-section mb-3 mb-md-0 me-md-4">
                     <div class="avatar-wrapper position-relative d-inline-block">
                         <div class="avatar-upload">
@@ -29,13 +34,13 @@
                                    class="d-none"
                                    wire:model="avatar"
                                    accept="image/*">
+                            @error('avatar') <span class="text-danger small">{{ $message }}</span> @enderror
                         </div>
                     </div>
                 </div>
 
-                <!-- Profile Info -->
                 <div class="profile-info flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap">
                         <div>
                             <h2 class="mb-1 fw-bold">{{ $name }}</h2>
                             <p class="text-muted mb-2">
@@ -45,7 +50,7 @@
                             <div class="d-flex flex-wrap gap-2 mb-3">
                                 <span class="badge bg-primary">
                                     <i class="bi bi-geo-alt me-1"></i>
-                                    {{ $city->name ?? 'ثبت نشده' }}
+                                    {{ $lawyer->city->name ?? 'ثبت نشده' }}
                                 </span>
                                 <span class="badge bg-success">
                                     <i class="bi bi-telephone me-1"></i>
@@ -85,6 +90,32 @@
                 </div>
                 <div class="card-body">
                     <form wire:submit.prevent="save">
+                        <!-- ایمیل و شماره تلفن (غیرقابل ویرایش) -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">ایمیل</label>
+                                <input type="email"
+                                       class="form-control"
+                                       value="{{ $email }}"
+                                       readonly
+                                       >
+                                <small class="text-muted">ایمیل قابل تغییر نیست</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">شماره موبایل</label>
+                                <input type="tel"
+                                       class="form-control"
+                                       value="{{ $phone }}"
+                                       readonly
+                                       >
+                                <small class="text-muted">شماره موبایل قابل تغییر نیست</small>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- سایر اطلاعات -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">نام و نام خانوادگی</label>
@@ -93,29 +124,6 @@
                                        wire:model="name"
                                        required>
                                 @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">ایمیل</label>
-                                <input type="email"
-                                       class="form-control @error('email') is-invalid @enderror"
-                                       wire:model="email"
-                                       required>
-                                @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">شماره موبایل</label>
-                                <input type="tel"
-                                       class="form-control @error('phone') is-invalid @enderror"
-                                       wire:model="phone"
-                                       pattern="09[0-9]{9}"
-                                       required>
-                                @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -134,8 +142,7 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">استان</label>
                                 <select class="form-select @error('province_id') is-invalid @enderror"
-                                        wire:model="province_id"
-                                        wire:change="updatedProvinceId($event.target.value)"
+                                        wire:model.live="province_id"
                                         required>
                                     <option value="">انتخاب استان</option>
                                     @foreach($provinces as $province)
@@ -199,58 +206,10 @@
             </div>
         </div>
 
-        <!-- Stats & Additional Info -->
+        <!-- Sidebar -->
         <div class="col-lg-4">
-            <!-- Stats -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent border-0">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-bar-chart text-primary me-2"></i>
-                        آمار پروفایل
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-3">
-                            <div>
-                                <i class="bi bi-eye text-info me-2"></i>
-                                <span>بازدید پروفایل</span>
-                            </div>
-                            <span class="fw-bold">۱,۲۴۵</span>
-                        </div>
-
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-3">
-                            <div>
-                                <i class="bi bi-mouse text-success me-2"></i>
-                                <span>کلیک‌ها</span>
-                            </div>
-                            <span class="fw-bold">۸۹</span>
-                        </div>
-
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-3">
-                            <div>
-                                <i class="bi bi-telephone text-warning me-2"></i>
-                                <span>تماس‌ها</span>
-                            </div>
-                            <span class="fw-bold">۲۳</span>
-                        </div>
-
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-3">
-                            <div>
-                                <i class="bi bi-star text-primary me-2"></i>
-                                <span>امتیاز</span>
-                            </div>
-                            <div>
-                                <span class="fw-bold">۴.۸</span>
-                                <i class="bi bi-star-fill text-warning ms-1"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Skills Preview -->
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-transparent border-0">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-tags text-primary me-2"></i>
@@ -278,7 +237,8 @@
             </div>
 
             <!-- Account Security -->
-            <div class="card border-0 shadow-sm mt-4">
+            <!-- در بخش امنیت حساب -->
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-shield-check text-primary me-2"></i>
@@ -286,13 +246,23 @@
                     </h5>
                 </div>
                 <div class="card-body">
+                    <!-- دکمه‌ها با لینک به صفحات -->
                     <div class="d-grid gap-2">
-                        <button class="btn btn-outline-warning">
+                        <a href="{{ route('profile.change-email') }}" class="btn btn-outline-warning">
+                            <i class="bi bi-envelope me-1"></i>
+                            تغییر ایمیل
+                        </a>
+                        <a href="{{ route('profile.change-phone') }}" class="btn btn-outline-info">
+                            <i class="bi bi-phone me-1"></i>
+                            تغییر شماره موبایل
+                        </a>
+                        <a href="{{ route('profile.change-password') }}" class="btn btn-outline-danger">
                             <i class="bi bi-key me-1"></i>
                             تغییر رمز عبور
-                        </button>
-                        <button class="btn btn-outline-danger">
-                            <i class="bi bi-shield-exclamation me-1"></i>
+                        </a>
+                        <hr>
+                        <button class="btn btn-outline-danger" onclick="confirmDelete()">
+                            <i class="bi bi-trash me-1"></i>
                             حذف حساب
                         </button>
                     </div>
@@ -301,20 +271,15 @@
         </div>
     </div>
 
-    <!-- Avatar Upload Progress -->
-    @if($avatar)
-        <div class="alert alert-info mt-3">
-            <div class="d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <i class="bi bi-upload me-2"></i>
-                    در حال آپلود تصویر...
-                </div>
-                <div class="spinner-border spinner-border-sm ms-2"></div>
-            </div>
-        </div>
-    @endif
-
     <style>
+        .profile-head {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        [data-theme="dark"] .profile-head {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        }
+
         .profile-cover {
             position: relative;
         }
@@ -340,7 +305,7 @@
             left: 10px;
             width: 40px;
             height: 40px;
-            background: var(--primary-color);
+            background: #667eea;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -352,12 +317,23 @@
         }
 
         .avatar-upload-btn:hover {
-            background: var(--secondary-color);
+            background: #764ba2;
             transform: scale(1.1);
         }
 
         .avatar-section {
             z-index: 1;
         }
+
+        input:disabled {
+            cursor: not-allowed;
+        }
     </style>
 </div>
+<script>
+    function confirmDelete() {
+        if (confirm('آیا از حذف حساب خود اطمینان دارید؟ این عمل غیرقابل بازگشت است.')) {
+            @this.deleteAccount();
+        }
+    }
+</script>

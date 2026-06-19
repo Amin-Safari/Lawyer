@@ -86,7 +86,7 @@
                         <div class="mb-4">
                             <label class="form-label">مبلغ شارژ (ریال)</label>
                             <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-transparent">ریال</span>
+                                <span class="input-group-text bg-transparent span-color">ریال</span>
                                 <input type="number"
                                        class="form-control"
                                        wire:model="chargeAmount"
@@ -159,7 +159,7 @@
                         <div class="mb-4">
                             <label class="form-label">مبلغ برداشت (ریال)</label>
                             <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-transparent">ریال</span>
+                                <span class="input-group-text bg-transparent span-color">ریال</span>
                                 <input type="number"
                                        class="form-control"
                                        wire:model="withdrawAmount"
@@ -201,12 +201,25 @@
     </div>
 
     <!-- Recent Transactions -->
+    <!-- Recent Transactions -->
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
             <h5 class="card-title mb-0">تراکنش‌های اخیر</h5>
-            <a href="{{ route('lawyer.transactions') }}" class="btn btn-sm btn-outline-primary">
-                مشاهده همه
-            </a>
+
+            <!-- ✅ انتخابگر تعداد نمایش در هر صفحه -->
+            <div class="d-flex align-items-center gap-2">
+                <label class="text-muted small mb-0">نمایش:</label>
+                <select wire:model.live="perPage" class="form-select form-select-sm w-auto">
+                    <option value="5">۵</option>
+                    <option value="10">۱۰</option>
+                    <option value="15">۱۵</option>
+                    <option value="20">۲۰</option>
+                    <option value="25">۲۵</option>
+                    <option value="50">۵۰</option>
+                    <option value="100">۱۰۰</option>
+                </select>
+                <span class="text-muted small">نتیجه</span>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -233,19 +246,19 @@
                             <td>
                                 @if($transaction->type == 'deposit')
                                     <span class="badge badge-deposit">
-                                            <i class="bi bi-plus-circle me-1"></i>
-                                            واریز
-                                        </span>
+                                    <i class="bi bi-plus-circle me-1"></i>
+                                    واریز
+                                </span>
                                 @else
                                     <span class="badge badge-withdrawal">
-                                            <i class="bi bi-dash-circle me-1"></i>
-                                            برداشت
-                                        </span>
+                                    <i class="bi bi-dash-circle me-1"></i>
+                                    برداشت
+                                </span>
                                 @endif
                             </td>
                             <td>
                                 <div class="fw-semibold">{{ $transaction->description }}</div>
-                                <small class="text-muted">{{ $transaction->reference_type }}</small>
+                                <small class="text-muted">{{ $transaction->reference_type ?? '' }}</small>
                             </td>
                             <td>
                                 <div class="{{ $transaction->type == 'deposit' ? 'text-success' : 'text-danger' }} fw-bold">
@@ -256,23 +269,23 @@
                             <td>
                                 @if($transaction->status == 'completed')
                                     <span class="badge bg-success">
-                                            <i class="bi bi-check-circle me-1"></i>
-                                            تکمیل شده
-                                        </span>
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    تکمیل شده
+                                </span>
                                 @elseif($transaction->status == 'pending')
                                     <span class="badge bg-warning">
-                                            <i class="bi bi-clock me-1"></i>
-                                            در انتظار
-                                        </span>
+                                    <i class="bi bi-clock me-1"></i>
+                                    در انتظار
+                                </span>
                                 @elseif($transaction->status == 'failed')
                                     <span class="badge bg-danger">
-                                            <i class="bi bi-x-circle me-1"></i>
-                                            ناموفق
-                                        </span>
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    ناموفق
+                                </span>
                                 @endif
                             </td>
                             <td>
-                                <small class="text-muted font-monospace">{{ $transaction->reference_id }}</small>
+                                <small class="text-muted font-monospace">{{ $transaction->reference_id ?? $transaction->transaction_id }}</small>
                             </td>
                         </tr>
                     @empty
@@ -286,53 +299,100 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
 
-    <!-- Payment Methods -->
-    <div class="card border-0 shadow-sm mt-4">
-        <div class="card-header bg-transparent border-0">
-            <h5 class="card-title mb-0">درگاه‌های پرداخت</h5>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="payment-method text-center p-4 border rounded">
-                        <div class="mb-3">
-                            <i class="bi bi-credit-card text-primary display-4"></i>
-                        </div>
-                        <h6>درگاه زرین‌پال</h6>
-                        <p class="text-muted small mb-3">پرداخت آنلاین با کارت‌های شتاب</p>
-                        <span class="badge bg-success">فعال</span>
+            <!-- ✅ صفحه‌بندی -->
+            <div class="card-footer bg-transparent border-0 pt-3 pb-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="text-muted small">
+                        نمایش {{ $recentTransactions->firstItem() ?? 0 }} تا {{ $recentTransactions->lastItem() ?? 0 }} از {{ $recentTransactions->total() }} تراکنش
                     </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="payment-method text-center p-4 border rounded">
-                        <div class="mb-3">
-                            <i class="bi bi-bank text-primary display-4"></i>
-                        </div>
-                        <h6>کارت به کارت</h6>
-                        <p class="text-muted small mb-3">واریز به حساب بانکی</p>
-                        <span class="badge bg-success">فعال</span>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="payment-method text-center p-4 border rounded">
-                        <div class="mb-3">
-                            <i class="bi bi-wallet text-primary display-4"></i>
-                        </div>
-                        <h6>کیف پول داخلی</h6>
-                        <p class="text-muted small mb-3">برداشت از موجودی حساب</p>
-                        <span class="badge bg-success">فعال</span>
+                    <div>
+                        {{ $recentTransactions->links() }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- Payment Methods -->
 
     <style>
+        .span-color{
+            color:black;
+        }
+        .span-color [data-theme="dark"]{
+            color: white !important;
+        }
+        /* استایل‌های صفحه‌بندی */
+        .pagination {
+            margin-bottom: 0;
+        }
+
+        .pagination .page-link {
+            color: var(--primary-color, #4361ee);
+            background-color: var(--bg-card, #ffffff);
+            border-color: var(--border-color, #dee2e6);
+            margin: 0 3px;
+            border-radius: 8px !important;
+            transition: all 0.3s ease;
+        }
+
+        .pagination .page-link:hover {
+            background-color: var(--primary-color, #4361ee);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .pagination .active .page-link {
+            background-color: var(--primary-color, #4361ee);
+            border-color: var(--primary-color, #4361ee);
+            color: white;
+        }
+
+        .pagination .disabled .page-link {
+            color: var(--text-secondary, #6c757d);
+            background-color: var(--bg-card, #ffffff);
+        }
+
+        /* در حالت شب */
+        [data-theme="dark"] .pagination .page-link {
+            background-color: var(--bg-card);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .pagination .page-link:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Responsive Pagination */
+        @media (max-width: 768px) {
+            .pagination {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .pagination .page-link {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* استایل برای انتخابگر تعداد نمایش */
+        select.form-select-sm {
+            cursor: pointer;
+            padding: 0.25rem 2rem 0.25rem 0.5rem;
+            border-radius: 8px;
+        }
+
+        /* انیمیشن برای تغییر صفحه */
+        .table-responsive {
+            transition: opacity 0.2s ease;
+        }
+
+        .loading {
+            opacity: 0.6;
+        }
         .wallet-icon {
             width: 70px;
             height: 70px;

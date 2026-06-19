@@ -17,7 +17,8 @@ use Filament\Tables\Table;
 class SkillsResource extends Resource
 {
     protected static ?string $model = Skill::class;
-
+    protected static string|null|\UnitEnum $navigationGroup = 'مدیریت مهارت ها';
+    protected static ?int $navigationSort = 1;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'تخصص ها';

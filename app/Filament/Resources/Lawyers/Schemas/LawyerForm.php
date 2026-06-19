@@ -27,6 +27,7 @@ class LawyerForm
                     ->disabledOn('edit'),
                 FileUpload::make('avatar')
                     ->label("آواتار")
+                    ->disk('public')
                     ->image()
                     ->directory('avatars')
                     ->maxSize(2048)

@@ -8,6 +8,7 @@ use App\Models\SkillClick;
 use App\Services\WalletService;
 use App\Services\SmsService;
 use Livewire\Component;
+use Illuminate\Support\Facades\DB;
 
 class SkillSelection extends Component
 {
@@ -15,33 +16,76 @@ class SkillSelection extends Component
     public $selectedSkillId;
     public $lawyers = [];
     public $search = '';
+    public $errorMessage = null;
 
     public function mount()
     {
+        $this->loadSkills();
+    }
+
+    public function loadSkills()
+    {
+        // فقط مهارت‌های فعال را بارگذاری کن
         $this->skills = Skill::where('is_active', true)
             ->orderBy('total_clicks', 'desc')
             ->limit(20)
             ->get();
+
+        // محاسبه تعداد وکلای فعال برای هر مهارت
+        foreach ($this->skills as $skill) {
+            $skill->active_lawyers_count = $skill->activeLawyers()->count();
+        }
     }
 
     public function selectSkill($skillId)
     {
+        // اول بررسی کن که مهارت وجود داشته باشد و فعال باشد
+        $skill = Skill::where('id', $skillId)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$skill) {
+            $this->errorMessage = 'این مهارت غیرفعال شده است.';
+            session()->flash('error', $this->errorMessage);
+            return;
+        }
+
         $this->selectedSkillId = $skillId;
-        $skill = Skill::findOrFail($skillId);
 
         // ثبت کلیک نمایش مهارت
         $this->recordView($skill);
 
-        // دریافت وکلا
+        // افزایش تعداد بازدید مهارت
+        $skill->increment('total_clicks');
+
+        // دریافت وکلای فعال برای این مهارت
         $this->lawyers = $this->getActiveLawyersForSkill($skill);
+
+        if ($this->lawyers->isEmpty()) {
+            session()->flash('warning', 'در حال حاضر وکیل فعالی برای این مهارت وجود ندارد.');
+        }
+
+        $this->dispatch('skillSelected');
+    }
+
+    public function updatedSearch()
+    {
+        $this->loadSkills();
     }
 
     private function getActiveLawyersForSkill(Skill $skill)
     {
+        // بررسی مجدد اینکه مهارت فعال است
+        if (!$skill->is_active) {
+            return collect([]);
+        }
+
+        // دریافت وکلایی که این مهارت را دارند و برای این مهارت فعال هستند
+        // و کیف پول فعال دارند
         return $skill->lawyers()
-//            ->wherePivot('is_active', true)
+            ->wherePivot('is_active', true)
             ->whereHas('user.wallet', function ($query) {
-                $query->where('balance', '>', 0)
+                $query->where('balance', '>', 1000)
                     ->where('status', 'active');
             })
             ->with(['user', 'province', 'city', 'skills'])
@@ -50,22 +94,61 @@ class SkillSelection extends Component
 
     public function viewLawyer($lawyerId)
     {
-        $skill = Skill::find($this->selectedSkillId);
-        if ($skill) {
-            // ثبت کلیک روی وکیل
-            $this->recordClick($skill, $lawyerId);
+        // اول بررسی کن مهارت هنوز فعال است
+        $skill = Skill::where('id', $this->selectedSkillId)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$skill) {
+            session()->flash('error', 'این مهارت دیگر فعال نیست.');
+            return redirect()->route('home');
         }
+
+        // بررسی کن وکیل برای این مهارت هنوز فعال است
+        $lawyerSkill = DB::table('lawyer_skill')
+            ->where('lawyer_id', $lawyerId)
+            ->where('skill_id', $skill->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$lawyerSkill) {
+            session()->flash('error', 'این وکیل برای این مهارت دیگر فعال نیست.');
+            return redirect()->route('home');
+        }
+
+
 
         // ریدایرکت به صفحه وکیل
         return redirect()->route('lawyer.profile.public', [
-            'lawyer' => $lawyerId,
-            'skill' => $this->selectedSkillId
+            'lawyerId' => $lawyerId,
+            'skillId' => $this->selectedSkillId
         ]);
     }
 
     public function callLawyer($lawyerId)
     {
-        $skill = Skill::find($this->selectedSkillId);
+        // بررسی کن مهارت هنوز فعال است
+        $skill = Skill::where('id', $this->selectedSkillId)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$skill) {
+            session()->flash('error', 'این مهارت دیگر فعال نیست.');
+            return;
+        }
+
+        // بررسی کن وکیل برای این مهارت هنوز فعال است
+        $lawyerSkill = DB::table('lawyer_skill')
+            ->where('lawyer_id', $lawyerId)
+            ->where('skill_id', $skill->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$lawyerSkill) {
+            session()->flash('error', 'این وکیل برای این مهارت دیگر فعال نیست.');
+            return;
+        }
+
         $lawyer = Lawyer::with('user.wallet')->find($lawyerId);
 
         if (!$lawyer || !$lawyer->user || !$lawyer->user->wallet) {
@@ -73,30 +156,53 @@ class SkillSelection extends Component
             return;
         }
 
-        // ثبت تماس
-        $this->recordCall($skill, $lawyer);
+        // بررسی موجودی کیف پول
+        if ($lawyer->user->wallet->balance < $skill->click_price) {
+            // اگر موجودی کافی نبود، غیرفعال کردن این مهارت برای این وکیل
+            DB::table('lawyer_skill')
+                ->where('lawyer_id', $lawyerId)
+                ->where('skill_id', $skill->id)
+                ->update(['is_active' => false]);
 
-        // کسر هزینه از کیف پول وکیل
-        $this->deductFromWallet($lawyer, $skill->click_price);
+            session()->flash('error', 'موجودی کیف پول وکیل کافی نیست. این مهارت برای این وکیل غیرفعال شد.');
+            return;
+        }
+        try {
+            $try_count = SkillClick::query()
+                ->where('lawyer_id', $lawyerId)
+                ->where('ip_address', request()->ip())
+                ->where('skill_id', $skill->id)
+                ->whereDate('created_at', today())
+                ->count();
+            if (!$try_count) {
+                // ثبت تماس
+                $this->recordCall($skill, $lawyer);
+                // کسر هزینه از کیف پول وکیل
+                $this->deductFromWallet($lawyer, $skill->click_price, $skill);
+                // ارسال SMS به وکیل
+                $this->sendSmsToLawyer($lawyer, $skill);
 
-        // ارسال SMS به وکیل
-        $this->sendSmsToLawyer($lawyer, $skill);
 
-        session()->flash('message', 'تماس با موفقیت ثبت شد. وکیل به زودی با شما تماس خواهد گرفت.');
+
+                // رفرش لیست وکلا (شاید وکیل غیرفعال شده باشد)
+
+            }
+            $this->dispatch('lawyer-contact', [
+                'phone' => $lawyer->phone,
+                'lawyerId'  => $lawyer->id,
+            ]);
+            session()->flash('message', 'تماس با موفقیت کپی ثبت شد.');
+            $this->lawyers = $this->getActiveLawyersForSkill($skill);
+
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
     }
 
     private function recordView(Skill $skill)
     {
-        SkillClick::create([
-            'skill_id' => $skill->id,
-            'type' => SkillClick::TYPE_VIEW,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'session_id' => session()->getId(),
-            'metadata' => [
-                'referrer' => url()->previous(),
-                'selected_at' => now()->toDateTimeString(),
-            ],
+        Skill::where($skill->id)->update([
+            'total_clicks' => DB::raw('total_clicks + 1'),
         ]);
     }
 
@@ -105,11 +211,14 @@ class SkillSelection extends Component
         SkillClick::create([
             'skill_id' => $skill->id,
             'lawyer_id' => $lawyerId,
-            'type' => SkillClick::TYPE_CLICK,
+            'type' => 'click',
             'cost' => $skill->click_price,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
             'session_id' => session()->getId(),
+            'metadata' => json_encode([
+                'skill_is_active' => $skill->is_active
+            ]),
         ]);
     }
 
@@ -118,15 +227,17 @@ class SkillSelection extends Component
         SkillClick::create([
             'skill_id' => $skill->id,
             'lawyer_id' => $lawyer->id,
-            'type' => SkillClick::TYPE_CALL,
+            'type' => 'call',
             'cost' => $skill->click_price,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
             'session_id' => session()->getId(),
-            'metadata' => [
+            'metadata' => json_encode([
                 'call_time' => now()->toDateTimeString(),
                 'caller_ip' => request()->ip(),
-            ],
+                'skill_is_active' => $skill->is_active,
+                'lawyer_skill_is_active' => true
+            ]),
         ]);
     }
 
@@ -134,37 +245,35 @@ class SkillSelection extends Component
     {
         $walletService = app(WalletService::class);
 
-        try {
-            $walletService->withdraw($lawyer->user->wallet, $amount, [
-                'type' => 'payment',
-                'description' => 'کسر بابت کلیک تماس مهارت',
-                'reference_id' => 'CLICK_' . now()->timestamp,
-            ]);
-        } catch (\Exception $e) {
-            // اگر موجودی کافی نبود، غیرفعال کردن مهارت برای این وکیل
-            $lawyer->skills()->updateExistingPivot($skill->id, [
-                'is_active' => false
-            ]);
-
-            throw new \Exception('موجودی کیف پول وکیل کافی نیست.');
-        }
+        $walletService->withdraw($lawyer->user->wallet, $amount, [
+            'type' => 'payment',
+            'description' => 'کسر بابت تماس با وکیل برای مهارت ' . $skill->name,
+            'reference_id' => 'SKILL_CALL_' . $skill->id . '_' . now()->timestamp,
+        ]);
     }
 
     private function sendSmsToLawyer(Lawyer $lawyer, Skill $skill)
     {
         $smsService = app(SmsService::class);
 
-        $message = " یک تماس جدید برای مهارت {$skill->name}\n"
-            . " از طریق سایت\n"
-            . " مبلغ: " . number_format($skill->click_price) . " ریال\n"
-            . " زمان: " . now()->format('Y/m/d H:i');
+        $message = "یک تماس جدید برای مهارت {$skill->name}\n"
+            . "از طریق سایت\n"
+            . "مبلغ: " . number_format($skill->click_price) . " ریال\n"
+            . "زمان: " . now()->format('Y/m/d H:i');
 
-        $smsService->send($lawyer->phone, $message);
+        $smsService->sendSms($lawyer->phone, $message);
     }
 
     public function render()
     {
-        return view('livewire.skill-selection')
-            ->layout('components.layouts.app');
+        // فیلتر کردن مهارت‌ها بر اساس جستجو
+        $filteredSkills = $this->skills->filter(function ($skill) {
+            return empty($this->search) ||
+                str_contains(mb_strtolower($skill->name), mb_strtolower($this->search));
+        });
+
+        return view('livewire.skill-selection', [
+            'filteredSkills' => $filteredSkills
+        ])->layout('components.layouts.app');
     }
 }
